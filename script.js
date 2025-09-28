@@ -75,7 +75,6 @@ const shootingStars = [];
 const numShootingStars = 5;
 const shootSpeedX = 6;
 const shootSpeedY = 3;
-
 for (let i = 0; i < numShootingStars; i++) {
   shootingStars.push({
     x: Math.random() * canvas.width / 2,

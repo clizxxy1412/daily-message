@@ -1,5 +1,7 @@
 let messages = [];
 let currentIndex = 0;
+<script src="script.js?v=1.0"></script>
+//forces the browser to give the most recent version of this script
 
 function showDate() {
   const today = new Date();

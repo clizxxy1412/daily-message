@@ -15,9 +15,15 @@ function showDate() {
 showDate();
 
 function showMessageForToday() {
-    //get todays date
-    let today = new Date();
-    //convert the date to a number
+    // Get today's date
+    const today = new Date();
+
+    // Format date nicely
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = today.toLocaleDateString(undefined, options);
+
+    // Display date in the existing #date div
+    document.getElementById('date').textContent = `Today is ${formattedDate}`;
     let dayNumber = Math.floor(today.getTime() / (1000*60*60*24));
     //use the date to randomize the message from message.txt
     let index = dayNumber % messages.length;
@@ -39,3 +45,128 @@ fetch("message.txt")
     .catch(err => {
         document.getElementById("message").textContent = "Error loading messages.";
     });
+
+const canvas = document.getElementById('star-canvas');
+const ctx = canvas.getContext('2d');
+
+// ---------- Resize Canvas ----------
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ---------- Stationary Stars ----------
+const stationaryStars = [];
+const numStationaryStars = 100;
+
+for (let i = 0; i < numStationaryStars; i++) {
+  stationaryStars.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    radius: Math.random() * 1.5,
+    alpha: Math.random()
+  });
+}
+
+// ---------- Shooting Stars ----------
+const shootingStars = [];
+const numShootingStars = 5;
+const shootSpeedX = 6;
+const shootSpeedY = 3;
+
+for (let i = 0; i < numShootingStars; i++) {
+  shootingStars.push({
+    x: Math.random() * canvas.width / 2,
+    y: Math.random() * canvas.height / 2,
+    length: 50 + Math.random() * 50,
+    dx: shootSpeedX,
+    dy: shootSpeedY,
+    alpha: 0 // start fully transparent for fade-in
+  });
+}
+
+// ---------- Draw Everything ----------
+function draw() {
+  // Fill background
+  ctx.fillStyle = "#0b0c1e"; // dark night color
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Twinkling stationary stars
+  stationaryStars.forEach(star => {
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+    ctx.fill();
+
+    star.alpha += (Math.random() - 0.5) * 0.02;
+    if (star.alpha < 0) star.alpha = 0;
+    if (star.alpha > 1) star.alpha = 1;
+  });
+
+  // Shooting stars with fade in/out
+  const edgeBuffer = 100; // start fading near this edge
+  shootingStars.forEach(shootStar => {
+    // Fade in
+    if (shootStar.alpha < 1 && shootStar.x < canvas.width - edgeBuffer) {
+      shootStar.alpha += 0.05;
+    }
+    // Fade out near edge
+    if (shootStar.x > canvas.width - edgeBuffer || shootStar.y > canvas.height - edgeBuffer) {
+      shootStar.alpha -= 0.05;
+    }
+    if (shootStar.alpha < 0) shootStar.alpha = 0;
+
+    // Draw shooting star
+    ctx.save();
+    ctx.globalAlpha = shootStar.alpha;
+    ctx.beginPath();
+    ctx.moveTo(shootStar.x, shootStar.y);
+    ctx.lineTo(shootStar.x - shootStar.length, shootStar.y - shootStar.length / 2);
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    // Move star
+    shootStar.x += shootStar.dx;
+    shootStar.y += shootStar.dy;
+
+    // Reset if completely faded out
+    if (shootStar.alpha <= 0) {
+      shootStar.x = Math.random() * canvas.width / 2;
+      shootStar.y = Math.random() * canvas.height / 2;
+      shootStar.alpha = 0; // start faded in again
+    }
+  });
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+
+// ---------- Shooting Star Click Easter Egg ----------
+canvas.addEventListener('click', function(e) {
+  const clickX = e.clientX;
+  const clickY = e.clientY;
+
+  shootingStars.forEach(shootStar => {
+    const xStart = shootStar.x - shootStar.length;
+    const yStart = shootStar.y - shootStar.length / 2;
+    const xEnd = shootStar.x;
+    const yEnd = shootStar.y;
+
+    if (
+      clickX >= xStart && clickX <= xEnd &&
+      clickY >= yStart && clickY <= yEnd
+    ) {
+      const password = prompt("✨ What's the password? ✨");
+      if (password && password.toLowerCase() === "evie") {
+        document.getElementById('special-message').style.display = 'block';
+      } else {
+        alert("Wrong password!");
+      }
+    }
+  });
+});
